@@ -1,20 +1,31 @@
-FROM resin/rpi-raspbian
+FROM armv7/armhf-ubuntu_core
 
-MAINTAINER Þafak Soylu <dawnoble@hotmail.com>
+RUN apt-get update && apt-get install -y -q \
+    build-essential \
+    curl \
+    g++ \
+    libboost-dev \
+    libprotobuf-dev \
+    m4 \
+    protobuf-compiler \
+    python \
+    wget \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update \
-        && apt-get install g++ protobuf-compiler libprotobuf-dev \
-        && apt-get install libboost-dev curl m4 wget \
-        && wget http://download.rethinkdb.com/dist/rethinkdb-2.2.5.tgz \
-        && tar xf rethinkdb-2.2.5.tgz
+RUN wget http://download.rethinkdb.com/dist/rethinkdb-2.2.5.tgz && \
+    tar -zxvf rethinkdb-2.2.5.tgz && \
+    cd rethinkdb-2.2.5 && \
+    ./configure --with-system-malloc --allow-fetch && \
+    make ALLOW_WARNINGS=1 && \
+    make install ALLOW_WARNINGS=1
 
-WORKDIR rethinkdb-2.2.5
+VOLUME ["/data"]
 
-RUN ./configure --with-system-malloc --allow-fetch \
-        && make ALLOW_WARNINGS=1 \
-        && sudo make install ALLOW_WARNINGS=1
+WORKDIR /data
 
 CMD ["rethinkdb", "--bind", "all"]
 
 #   process cluster webui
 EXPOSE 28015 29015 8080
+
